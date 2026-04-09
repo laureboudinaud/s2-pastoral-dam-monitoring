@@ -41,7 +41,7 @@ The script was developed for the Bounkani and Tchologo regions of northern Côte
 ## How to Run
 
 1. Open the GEE Code Editor at https://code.earthengine.google.com
-2. Create a new script and paste the contents of `dam\\\_water\\\_monitoring\\\_GEE.js`
+2. Create a new script and paste the contents of `dam_water_monitoring_GEE.js`
 3. Update the USER PARAMETERS in Section 1 of the script
 4. Click **Run**
 
@@ -66,18 +66,18 @@ The script requires a point FeatureCollection representing dam locations. Each p
 3. Replace the asset path in the USER PARAMETERS section of the script:
 
 ```javascript
-var dams\\\\\\\_pts = ee.FeatureCollection("users/your\\\\\\\_username/your\\\\\\\_dam\\\\\\\_asset")
+var dams_pts = ee.FeatureCollection("users/your_username/your_dam_asset")
                  .filterBounds(aoi);
 ```
 
 OR
 
 **Deriving dam points directly from the script:**  
-If no field-surveyed point layer is available, candidate dam locations can be extracted directly from the binary water mask computed in Section 4 of the script. To do this, convert the `water\\\_curr` image to vectors and extract centroids:
+If no field-surveyed point layer is available, candidate dam locations can be extracted directly from the binary water mask computed in Section 4 of the script. To do this, convert the `water_curr` image to vectors and extract centroids:
 
 ```javascript
 // Extract candidate dam points from detected water polygons
-var water\\\_polygons = water\\\_curr.reduceToVectors({
+var water_polygons = water_curr.reduceToVectors({
   geometry: aoi,
   scale: 10,
   geometryType: 'polygon',
@@ -86,7 +86,7 @@ var water\\\_polygons = water\\\_curr.reduceToVectors({
   crs: 'EPSG:4326'
 });
 
-var candidate\\\_points = water\\\_polygons.map(function(f) {
+var candidate_points = water_polygons.map(function(f) {
   return f.centroid();
 });
 ```
@@ -97,12 +97,12 @@ var candidate\\\_points = water\\\_polygons.map(function(f) {
 
 ### Area of Interest
 
-The script as provided references a private administrative boundary asset (`civ\\\_adm1`) specific to Côte d'Ivoire. To adapt to a different study area, replace this with one of the following publicly available options in GEE:
+The script as provided references a private administrative boundary asset (`civ_adm1`) specific to Côte d'Ivoire. To adapt to a different study area, replace this with one of the following publicly available options in GEE:
 
 |Dataset|Asset path|Notes|
 |-|-|-|
 |FAO GAUL 2015|`FAO/GAUL/2015/level1`|Good global coverage but predates recent administrative reorganisations in some countries|
-|Custom upload|`users/your\\\_username/your\\\_boundary\\\_asset`|Recommended when public datasets do not reflect recent administrative subdivisions — sources may be FAO GAUL (2024), GeoBoundaries, OCHA/HDX|
+|Custom upload|`users/your_username/your_boundary_asset`|Recommended when public datasets do not reflect recent administrative subdivisions — sources may be FAO GAUL (2024), GeoBoundaries, OCHA/HDX|
 
 > \\\*\\\*Note for Côte d'Ivoire users:\\\*\\\* The Bounkani and Tchologo regions are recent administrative subdivisions that postdate the FAO GAUL 2015 dataset. Users working in this area should upload a current boundary layer from \\\[OCHA HDX](https://data.humdata.org) or the Ivorian national mapping agency (BNETD-CIGN).
 
@@ -115,17 +115,17 @@ All parameters are consolidated in **Section 1** of the script:
 |Parameter|Description|Default|
 |-|-|-|
 |`aoi`|Area of interest boundary|Bounkani \& Tchologo, Côte d'Ivoire|
-|`dams\\\_pts`|Dam point layer|Private asset — replace with your own|
-|`BUFFER\\\_RADIUS`|Buffer radius around dam points (metres)|`1000`|
-|`YEAR\\\_REF`|Baseline / reference year|`2018`|
-|`YEAR\\\_CURR`|Current / analysis year|`2025`|
-|`WET\\\_START`|Start month of wet season (inclusive)|`5` (May)|
-|`WET\\\_END`|End month of wet season (inclusive)|`10` (October)|
-|`DRY\\\_START`|Start month of peak dry season (inclusive)|`1` (January)|
-|`DRY\\\_END`|End month of peak dry season (inclusive)|`2` (February)|
-|`SPI\\\_VIZ\\\_MIN`|Minimum value for SPI visualisation|`0`|
-|`SPI\\\_VIZ\\\_MAX`|Maximum value for SPI visualisation|`0.5`|
-|`EXPORT\\\_FOLDER`|Google Drive folder name for exported outputs|`GEE`|
+|`dams_pts`|Dam point layer|Private asset — replace with your own|
+|`BUFFER_RADIUS`|Buffer radius around dam points (metres)|`1000`|
+|`YEAR_REF`|Baseline / reference year|`2018`|
+|`YEAR_CURR`|Current / analysis year|`2025`|
+|`WET_START`|Start month of wet season (inclusive)|`5` (May)|
+|`WET_END`|End month of wet season (inclusive)|`10` (October)|
+|`DRY_START`|Start month of peak dry season (inclusive)|`1` (January)|
+|`DRY_END`|End month of peak dry season (inclusive)|`2` (February)|
+|`SPI_VIZ_MIN`|Minimum value for SPI visualisation|`0`|
+|`SPI_VIZ_MAX`|Maximum value for SPI visualisation|`0.5`|
+|`EXPORT_FOLDER`|Google Drive folder name for exported outputs|`GEE`|
 
 \---
 
@@ -140,7 +140,7 @@ All parameters are consolidated in **Section 1** of the script:
 
 ### Exported Files (saved to Google Drive)
 
-* `SPI\\\_\\\[YEAR]\\\_by\\\_dam\\\_buffer.csv` — Mean SPI value per dam buffer, used to classify dams into water persistence categories
+* `SPI_[YEAR]_by_dam_buffer.csv` — Mean SPI value per dam buffer, used to classify dams into water persistence categories
 
 ### SPI Classification
 
