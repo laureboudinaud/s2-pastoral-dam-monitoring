@@ -23,10 +23,10 @@ The script was developed for the Bounkani and Tchologo regions of northern Côte
 
 |File|Description|
 |-|-|
-|`dam\_water\_monitoring\_GEE.js`|Main GEE script|
+|`dam_water_monitoring_GEE.js`|Main GEE script|
 |`README.md`|This file|
-|`dam\_inventory\_civ\_tchbou.csv`|Dam locations with field survey attributes for the ones collected via Kobo Toolbox (others derived from using S2 NDWI p90 mask and VHR imagery)|
-|`dam\_water\_metrics\_EO\_2025.csv`|EO-derived water metrics per dam: inter-annual functionality (p90 NDWI) and intra-annual Seasonal Persistence Index (SPI) for 2025|
+|`dam_inventory_civ_tchbou.csv`|Dam locations with field survey attributes for the ones collected via Kobo Toolbox (others derived from using S2 NDWI p90 mask and VHR imagery)|
+|`dam_water_metrics_EO_2025.csv`|EO-derived water metrics per dam: inter-annual functionality (p90 NDWI) and intra-annual Seasonal Persistence Index (SPI) for 2025|
 
 \---
 
