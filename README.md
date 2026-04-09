@@ -55,7 +55,7 @@ The script requires a point FeatureCollection representing dam locations. Each p
 
 
 
-**Study area dataset:** For the Bounkani and Tchologo regions, the dam point layer was built in two stages. An initial set of 68 points was derived from field surveys and validated against Sentinel-2 imagery. This set was then expanded using the water detection component of this script (Section 4) to identify additional water bodies consistent with dam infrastructure, reaching a total of 312 dam locations.
+**Study area dataset:** For the Bounkani and Tchologo regions, the dam point layer was built in two stages. An initial set of 68 points was derived from field surveys and validated against Sentinel-2 imagery. This set was then expanded using the water detection component of this script (Section 4) to identify additional water bodies consistent with dam infrastructure, reaching a total of 308 dam locations.
 
 
 
