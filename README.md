@@ -159,18 +159,18 @@ If you use this script in your research, please cite both the associated publica
 
 **Publication:**
 
-> Boudinaud, L. et al. (2026) \\*(in preparation)\\*
+> Boudinaud, L. et al. (2026) *(in preparation)*
 
 **Code:**
 
-> Boudinaud, L. (2026): GEE script for Sentinel-2 NDWI and Seasonal Persistence Index for pastoral dam monitoring, Côte d'Ivoire, \\*(in preparation)\\*
+> Boudinaud, L. (2026): GEE script for Sentinel-2 NDWI and Seasonal Persistence Index for pastoral dam monitoring, Côte d'Ivoire, *(in preparation)*
 
 \---
 
 ## Contact
 
 Laure Boudinaud  
-For questions or issues, please contact laure@alateo-analytics.com or laure.boudinaud@gmail.com
+For questions or issues, please contact laure@galateo-analytics.com or laure.boudinaud@gmail.com
 
 \---
 
