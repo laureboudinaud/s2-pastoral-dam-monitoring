@@ -56,10 +56,6 @@ Sentinel-2 imagery                    Load & merge CSVs
 - Python 3.8+
 - Dependencies: `pandas`, `numpy`, `matplotlib`, `pymannkendall`
 
-```bash
-pip install pandas numpy matplotlib pymannkendall
-```
-
 ---
 
 ## Part 1 — GEE Script
