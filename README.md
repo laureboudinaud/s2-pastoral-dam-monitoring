@@ -224,4 +224,4 @@ laure@galateo-analytics.com | laure.boudinaud@gmail.com
 
 ## Acknowledgements
 
-This work was developed in the framework of a project on agro-pastoral resource monitoring and conflict dynamics in northern Côte d'Ivoire, implemented by PHI Consulting in partnership with the Réseau Billital Maroobé (RBM) and the International Organization for Migration (IOM), with funding from the Government of Japan.
+This work was developed in the framework of a project on agro-pastoral resource monitoring and conflict dynamics in northern Côte d'Ivoire, implemented by PHI Consulting in partnership with the Réseau Billital Maroobé (RBM) for the International Organization for Migration (IOM), with funding from the Government of Japan.
