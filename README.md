@@ -1,82 +1,98 @@
-[README.md](https://github.com/user-attachments/files/26609774/README.md)
 # Sentinel-2 NDWI Time Series and Seasonal Persistence Index (SPI) for Pastoral Dam Water Availability Assessment
 
 **Author:** Laure Boudinaud  
-**Date:** February 2026  
+**Date:** 2026  
 **License:** CC BY 4.0  
 **Associated publication:** Boudinaud, L. et al. (2026) *(in preparation)*
 
-\---
+---
 
 ## Overview
 
-This repository contains a Google Earth Engine (GEE) JavaScript script to assess two dimensions of pastoral dam water availability using Sentinel-2 time series:
+This repository contains a Google Earth Engine (GEE) JavaScript script and a Python post-processing notebook to assess two dimensions of pastoral dam water availability using Sentinel-2 time series:
 
-1. **Inter-annual functionality** — whether surface water is detectable at a dam location across years
+1. **Inter-annual functionality** — whether surface water is detectable at a dam location across years (2016–2025)
 2. **Intra-annual persistence** — whether water is maintained through the dry season within a given year
 
-The script was developed for the Bounkani and Tchologo regions of northern Côte d'Ivoire and is fully adaptable to any region with a defined area of interest and dam point layer.
+The workflow was developed for the Bounkani and Tchologo regions of northern Côte d'Ivoire and is fully adaptable to any region with a defined dam point layer.
 
-\---
+---
 
 ## Repository Contents
 
-|File|Description|
-|-|-|
-|`dam_water_monitoring_GEE.js`|Main GEE script|
-|`README.md`|This file|
-|`dam_inventory_civ_tchbou.csv`|Dam locations with field survey attributes for the ones collected via Kobo Toolbox (others derived from using S2 NDWI p90 mask and VHR imagery)|
-|`dam_water_metrics_EO_2025.csv`|EO-derived water metrics per dam: inter-annual functionality (p90 NDWI) and intra-annual Seasonal Persistence Index (SPI) for 2025|
+| File | Description |
+|------|-------------|
+| `dam_water_monitoring_GEE.js` | GEE script: Sentinel-2 composites, SPI computation, zonal statistics export |
+| `dam_analysis_classification.ipynb` | Python notebook: trend analysis, classification, and export |
+| `README.md` | This file |
+| `dam_inventory_civ_tchbou.csv` | Dam locations with field survey attributes for the 68 dams collected via KoboCollect; remaining locations derived from Sentinel-2 NDWI detection and VHR imagery inspection |
+| `dam_stats_mean_2016_2025.csv` | Mean zonal statistics per dam buffer per year (NDWI p90, wet/dry season p90, SPI, water fraction) |
+| `dam_stats_max_2016_2025.csv` | Maximum pixel zonal statistics per dam buffer per year |
+| `dam_stats_spi_stddev_2016_2025.csv` | Standard deviation of SPI within each dam buffer per year |
 
-\---
+---
+
+## Workflow Overview
+
+```
+[GEE script]                          [Python notebook]
+Sentinel-2 imagery                    Load & merge CSVs
+→ Cloud masking                       → Normalise water fraction
+→ Annual NDWI composites              → Mann-Kendall + Sen's slope
+→ SPI computation                     → Dual classification (Set 1 + Set 2)
+→ Zonal statistics (3 CSVs)    →→→   → Time series plots
+                                      → Export classified inventory
+```
+
+---
 
 ## Requirements
 
-* A Google Earth Engine account : https://earthengine.google.com
-* A dam point layer uploaded as a GEE asset (see Input Data below)
-* A boundary layer for your area of interest (see Area of Interest below)
+### GEE script
+- A Google Earth Engine account: https://earthengine.google.com
+- A dam point layer uploaded as a GEE asset (see Input Data below)
 
-\---
+### Python notebook
+- Python 3.8+
+- Dependencies: `pandas`, `numpy`, `matplotlib`, `pymannkendall`
 
-## How to Run
+```bash
+pip install pandas numpy matplotlib pymannkendall
+```
+
+---
+
+## Part 1 — GEE Script
+
+### How to Run
 
 1. Open the GEE Code Editor at https://code.earthengine.google.com
 2. Create a new script and paste the contents of `dam_water_monitoring_GEE.js`
 3. Update the USER PARAMETERS in Section 1 of the script
 4. Click **Run**
 
-\---
+### Input Data
 
-## Input Data
+#### Dam Point Layer
 
-### Dam Point Layer
+The script requires a point FeatureCollection representing dam locations. Each point should correspond to the centroid or spillway location of a dam, and is buffered by 1,000 m to define the spatial analysis unit.
 
-The script requires a point FeatureCollection representing dam locations. Each point should correspond to the centroid or spillway location of a dam.
-
-
-
-**Study area dataset:** For the Bounkani and Tchologo regions, the dam point layer was built in two stages. An initial set of 68 points was derived from field surveys and validated against Sentinel-2 imagery. This set was then expanded using the water detection component of this script (Section 4) to identify additional water bodies consistent with dam infrastructure, reaching a total of 312 dam locations.
-
-
+**Study area dataset:** For the Bounkani and Tchologo regions, the dam inventory was built in two stages. A structured field survey conducted in December 2025 by approximately 40 local enumerators using KoboCollect yielded 68 ground-verified dam locations. Satellite-based water detection using annual NDWI p90 composites was then applied to extend the inventory, reaching a total of 308 dam locations across both regions.
 
 **To use your own dam layer:**
 
 1. Prepare a shapefile or CSV with point coordinates
 2. Upload it to GEE via: **Assets > New > Shapefiles or CSV**
-3. Replace the asset path in the USER PARAMETERS section of the script:
+3. Replace the asset path in the USER PARAMETERS section:
 
 ```javascript
-var dams_pts = ee.FeatureCollection("users/your_username/your_dam_asset")
-                 .filterBounds(aoi);
+var dams_pts = ee.FeatureCollection("users/your_username/your_dam_asset");
 ```
 
-OR
-
 **Deriving dam points directly from the script:**  
-If no field-surveyed point layer is available, candidate dam locations can be extracted directly from the binary water mask computed in Section 4 of the script. To do this, convert the `water_curr` image to vectors and extract centroids:
+If no field-surveyed point layer is available, candidate dam locations can be extracted from the binary water mask:
 
 ```javascript
-// Extract candidate dam points from detected water polygons
 var water_polygons = water_curr.reduceToVectors({
   geometry: aoi,
   scale: 10,
@@ -91,90 +107,125 @@ var candidate_points = water_polygons.map(function(f) {
 });
 ```
 
-> Important: Automatically derived points should be manually reviewed before use. The water detection step identifies all surface water, including rivers, flooded areas, and other non-dam features. Visual inspection against high-resolution imagery (e.g. Google Satellite in the GEE basemap) is strongly recommended before using these points for dam functionality assessment.
+> **Important:** Automatically derived points should be reviewed before use. Visual inspection against high-resolution imagery is strongly recommended.
 
+#### Area of Interest
 
+The AOI is derived directly from the spatial extent of the dam buffer collection — no separate administrative boundary asset is required. To adapt to a different study area, replace the dam point layer; the AOI will update automatically.
 
-### Area of Interest
-
-The script as provided references a private administrative boundary asset (`civ_adm1`) specific to Côte d'Ivoire. To adapt to a different study area, replace this with one of the following publicly available options in GEE:
-
-|Dataset|Asset path|Notes|
-|-|-|-|
-|FAO GAUL 2015|`FAO/GAUL/2015/level1`|Good global coverage but predates recent administrative reorganisations in some countries|
-|Custom upload|`users/your_username/your_boundary_asset`|Recommended when public datasets do not reflect recent administrative subdivisions — sources may be FAO GAUL (2024), GeoBoundaries, OCHA/HDX|
-
-> \\\*\\\*Note for Côte d'Ivoire users:\\\*\\\* The Bounkani and Tchologo regions are recent administrative subdivisions that postdate the FAO GAUL 2015 dataset. Users working in this area should upload a current boundary layer from \\\[OCHA HDX](https://data.humdata.org) or the Ivorian national mapping agency (BNETD-CIGN).
-
-\---
-
-## User Parameters
+### User Parameters
 
 All parameters are consolidated in **Section 1** of the script:
 
-|Parameter|Description|Default|
-|-|-|-|
-|`aoi`|Area of interest boundary|Bounkani \& Tchologo, Côte d'Ivoire|
-|`dams_pts`|Dam point layer|Private asset — replace with your own|
-|`BUFFER_RADIUS`|Buffer radius around dam points (metres)|`1000`|
-|`YEAR_REF`|Baseline / reference year|`2018`|
-|`YEAR_CURR`|Current / analysis year|`2025`|
-|`WET_START`|Start month of wet season (inclusive)|`5` (May)|
-|`WET_END`|End month of wet season (inclusive)|`10` (October)|
-|`DRY_START`|Start month of peak dry season (inclusive)|`1` (January)|
-|`DRY_END`|End month of peak dry season (inclusive)|`2` (February)|
-|`SPI_VIZ_MIN`|Minimum value for SPI visualisation|`0`|
-|`SPI_VIZ_MAX`|Maximum value for SPI visualisation|`0.5`|
-|`EXPORT_FOLDER`|Google Drive folder name for exported outputs|`GEE`|
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `dams_pts` | Dam point layer | Private asset — replace with your own |
+| `BUFFER_RADIUS` | Buffer radius around dam points (metres) | `1000` |
+| `YEAR_START` | First year of the time series | `2016` |
+| `YEAR_END` | Last year of the time series | `2025` |
+| `WET_START` | Start month of wet season (inclusive) | `5` (May) |
+| `WET_END` | End month of wet season (inclusive) | `10` (October) |
+| `DRY_START` | Start month of peak dry season (inclusive) | `1` (January) |
+| `DRY_END` | End month of peak dry season (inclusive) | `2` (February) |
+| `SNAPSHOT_YEARS` | Years for map display and raster export | `[2016, 2021, 2025]` |
+| `EXPORT_FOLDER` | Google Drive folder name for exported outputs | `GEE` |
 
-\---
+### Outputs
 
-## Outputs
+**Map layers (visualised in the GEE Code Editor)**
 
-### Map Layers (visualised in the GEE Code Editor)
+- Annual NDWI p90 composites for snapshot years, clipped to dam buffers
+- Binary water presence masks for snapshot years
+- Seasonal Persistence Index (SPI) for snapshot years, masked to water-detected pixels
+- Dam buffer outlines
 
-* Annual NDWI p90 composites for reference and current year, clipped to dam buffers
-* Binary water presence masks for both years
-* Seasonal Persistence Index (SPI) for the current year, masked to water-detected pixels
-* Dam buffer outlines
+**Exported CSV files (saved to Google Drive)**
 
-### Exported Files (saved to Google Drive)
+Three long-format tables, each with one row per dam per year (2016–2025):
 
-* `SPI_[YEAR]_by_dam_buffer.csv` — Mean SPI value per dam buffer, used to classify dams into water persistence categories
+| File | Contents |
+|------|----------|
+| `dam_stats_mean_2016_2025.csv` | Mean NDWI p90, wet/dry season p90, SPI, and water fraction per buffer |
+| `dam_stats_max_2016_2025.csv` | Maximum pixel values of NDWI p90, wet/dry season p90, and SPI within each buffer |
+| `dam_stats_spi_stddev_2016_2025.csv` | Standard deviation of SPI within each buffer |
 
-### SPI Classification
+---
 
-|Mean SPI|Interpretation|
-|-|-|
-|< 0.1|Permanent water|
-|0.1 – 0.3|Semi-permanent|
-|> 0.3|Seasonal / ephemeral|
-|No value|No water detected (likely non-functional dam)|
+## Part 2 — Python Notebook
 
-\---
+### How to Run
+
+1. Place the three GEE export CSVs in an `inputs/` folder in the same directory as the notebook
+2. Open `dam_analysis_classification.ipynb` in Jupyter or VS Code
+3. Review and adjust thresholds in **Section 8** if needed (see below)
+4. Run all cells
+5. Outputs are saved to an `outputs/` folder
+
+### Notebook Structure
+
+| Section | Description |
+|---------|-------------|
+| 1. Imports | Load dependencies |
+| 2. Paths & parameters | File paths, year range, classification thresholds, reference year |
+| 3. Load and merge | Read the three CSVs and merge on `dam_id` + `year` |
+| 4. Inspect | Regional mean water fraction per year — use to confirm reference year |
+| 5. Pivot to wide format | One row per dam, one column per metric per year |
+| 6. Normalisation | Compute `relative_water_fraction` against reference year |
+| 7. Trend analysis | Mann-Kendall test + Sen's slope for water fraction and SPI series |
+| 8. Threshold tuning | Inspect distributions and adjust `WF_HIGH`, `WF_LOW`, `SPI_PERM`, `SPI_SEAS` |
+| 9. Classification | Assign Set 1 and Set 2 classes + restoration candidate flag |
+| 10. Plots | Pekel-style time series plots by class |
+| 11. Export | Save classified inventory to `outputs/` |
+
+### Classification
+
+Each dam receives two independent classifications based on its 10-year time series:
+
+**Set 1 — Inter-annual water presence trajectory**
+
+| Class | Label | Description |
+|-------|-------|-------------|
+| 1 | Stable functional | Consistently high water fraction |
+| 2 | Improving | Increasing water fraction trend |
+| 3 | Degrading | Declining water fraction trend |
+| 4 | Chronically low | Persistently low but detectable water |
+| 5 | Lost | No longer detectable in recent years |
+| 6 | New / Recently created | No water in early years, appears later |
+
+**Set 2 — Intra-annual SPI persistence trajectory**
+
+| Class | Label | Description |
+|-------|-------|-------------|
+| A | Persistently permanent | Consistently low SPI — year-round retention |
+| B | Becoming more permanent | SPI decreasing over time |
+| C | Persistently seasonal | Consistently high SPI — dry-season loss |
+| D | Becoming more seasonal | SPI increasing over time |
+| E | Intermittent / variable | No significant trend, high variability |
+| F | No data | No surface water detected |
+
+A **restoration candidate flag** is assigned to dams in Set 1 classes 3–5 with high within-buffer SPI standard deviation, indicating residual permanent water presence alongside a seasonal fringe and suggesting structural repair may restore functionality without full reconstruction.
+
+---
 
 ## Citation
 
-If you use this script in your research, please cite both the associated publication and the code deposit:
+If you use this work in your research, please cite both the associated publication and the code:
 
 **Publication:**
-
 > Boudinaud, L. et al. (2026) *(in preparation)*
 
 **Code:**
+> Boudinaud, L. (2026): GEE script and Python notebook for Sentinel-2 NDWI and Seasonal Persistence Index for pastoral dam monitoring, Côte d'Ivoire *(in preparation)*
 
-> Boudinaud, L. (2026): GEE script for Sentinel-2 NDWI and Seasonal Persistence Index for pastoral dam monitoring, Côte d'Ivoire, *(in preparation)*
-
-\---
+---
 
 ## Contact
 
 Laure Boudinaud  
-For questions or issues, please contact laure@galateo-analytics.com or laure.boudinaud@gmail.com
+laure@galateo-analytics.com | laure.boudinaud@gmail.com
 
-\---
+---
 
 ## Acknowledgements
 
-This script was developed in the framework of a project on agro-pastoral resource monitoring and conflict dynamics in northern Côte d'Ivoire, implemented by PHI Consulting in partnership with the Réseau Billital Maroobé (RBM) and the International Organization for Migration (IOM), with funding from the Government of Japan.
-
+This work was developed in the framework of a project on agro-pastoral resource monitoring and conflict dynamics in northern Côte d'Ivoire, implemented by PHI Consulting in partnership with the Réseau Billital Maroobé (RBM) and the International Organization for Migration (IOM), with funding from the Government of Japan.
