@@ -1,4 +1,4 @@
-# Sentinel-2 NDWI Time Series and Seasonal Persistence Index (SPI) for Pastoral Dam Water Availability Assessment
+# Sentinel-2 Time Series NDWI Analysis and Seasonal Persistence Index for Pastoral Dam Water Availability Assessment
 
 **Author:** Laure Boudinaud  
 **Date:** 2026  
