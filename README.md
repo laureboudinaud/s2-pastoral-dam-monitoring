@@ -211,7 +211,7 @@ If you use this work in your research, please cite both the associated publicati
 > Boudinaud, L. et al. (2026) *(in preparation)*
 
 **Code:**
-> Boudinaud, L. (2026): GEE script and Python notebook for Sentinel-2 NDWI and Seasonal Persistence Index for pastoral dam monitoring, Côte d'Ivoire *(in preparation)*
+> Boudinaud, L. (2026): GEE script and Python notebook for Pastoral Dam Monitoring and Water Availability Assessment Using Sentinel-2 Time Series *(in preparation)*
 
 ---
 
