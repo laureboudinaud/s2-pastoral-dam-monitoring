@@ -40,7 +40,7 @@ Sentinel-2 imagery                    Load & merge CSVs
 → Cloud masking                       → Normalise water fraction
 → Annual NDWI composites              → Mann-Kendall + Sen's slope
 → SPI computation                     → Dual classification (Set 1 + Set 2)
-→ Zonal statistics (3 CSVs)    →→→   → Time series plots
+→ Zonal statistics (3 CSVs)           → Time series plots
                                       → Export classified inventory
 ```
 
