@@ -1,38 +1,31 @@
 // =============================================================================
-// Title      : Annual Water Presence and Seasonal Persistence Index (SPI)
-//              Time Series Statistics for Dam Monitoring in Semi-Arid Regions
+// Title      : Water Presence and Seasonal Persistence Metrics derived from
+//              Sentinel-2 Time Series for Dam Monitoring in Semi-Arid Regions
 // Author     : Laure Boudinaud
 // Date       : 2026
 // License    : CC BY 4.0
 // -----------------------------------------------------------------------------
 // Description:
-//   For each dam buffer zone, computes annual Sentinel-2 composites from 2016
-//   to 2025 and extracts zonal statistics exported as three long-format CSVs
-//   (one row per dam per year), to be further analysed in Python for trend 
-//   analysis and classification.
+//   Computes annual Sentinel-2 composites (2016–2025) per dam buffer zone and
+//   exports zonal statistics as three long-format CSVs (one row per dam per year)
+//   for post-processing in Python.
 //
 //   COMPOSITES (per year):
-//     ndwi_p90       Annual 90th-percentile NDWI    — inter-annual water presence
-//     wet_p90        Wet season p90 NDWI            — peak water signal
-//     dry_p90        Dry season p90 NDWI            — residual dry-season water
-//     spi            wet_p90 - dry_p90              — Seasonal Persistence Index
-//                    low SPI  = water retained year-round (permanent)
-//                    high SPI = water lost in dry season (seasonal/ephemeral)
-//     water          Binary mask: ndwi_p90 > 0      — used for water_fraction
+//     ndwi_p90   Annual 90th-percentile NDWI        — inter-annual water presence
+//     wet_p90    Wet season (May–Oct) p90 NDWI      — peak water signal
+//     dry_p90    Dry season (Jan–Feb) p90 NDWI      — residual dry-season water
+//     spi        wet_p90 − dry_p90, water-masked    — Seasonal Persistence Index
+//                low SPI  = year-round retention (permanent)
+//                high SPI = dry-season loss (seasonal/ephemeral)
+//     water      Binary mask: ndwi_p90 > 0          — water presence flag
 //
 //   EXPORTED TABLES:
-//     dam_stats_mean_2016_2025.csv
-//       ndwi_p90, wet_p90, dry_p90, spi  → mean over buffer
-//       water                            → water_fraction (mean of binary = proportion)
-//
-//     dam_stats_max_2016_2025.csv
-//       ndwi_p90, wet_p90, dry_p90, spi  → max pixel value in buffer
-//       (captures dam signal, less diluted by surrounding land)
-//
-//     dam_stats_spi_stddev_2016_2025.csv
-//       spi                              → stddev within buffer
-//       high stddev = permanent core + seasonal fringe present
-//                   = spatially heterogeneous retention → restoration-relevant
+//     dam_stats_mean_2016_2025.csv     — mean ndwi_p90, wet_p90, dry_p90, spi
+//                                         water_fraction (mean of binary mask)
+//     dam_stats_max_2016_2025.csv      — max pixel values (less land dilution)
+//     dam_stats_spi_stddev_2016_2025.csv — SPI stddev within water surface
+//                                          high stddev = permanent core + seasonal
+//                                          fringe → restoration-relevant
 // =============================================================================
 
 
@@ -59,8 +52,7 @@ var SNAPSHOT_YEARS = [2016, 2021, 2025];
 
 // Visualisation params
 var NDWI_VIZ = {min: -0.4, max: 0.3, palette: ['brown', 'white', 'blue']};
-// var SPI_VIZ  = {min: 0,     max: 0.5, palette: ['blue', 'white', 'yellow']};
-var SPI_VIZ  = {min: 0,    max: 0.5, palette: ['#1d6fa4', '#ffffcc', '#d94801']};
+var SPI_VIZ  = {min: 0,     max: 0.5, palette: ['blue', 'white', 'yellow']};
 
 // Google Drive export folder
 var EXPORT_FOLDER = 'GEE';
@@ -134,10 +126,9 @@ var annualMetrics = years.map(function(year) {
     .reduce(ee.Reducer.percentile([90]))
     .rename('dry_p90');
 
-  var spi = wet_p90.subtract(dry_p90).rename('spi');
-
   // Binary water mask from annual p90 (for SPI masking and visualisation)
   var water = ndwi_p90.gt(0).rename('water');
+  var spi = wet_p90.subtract(dry_p90).updateMask(water).rename('spi');
 
   return ndwi_p90
     .addBands(wet_p90)
@@ -200,12 +191,12 @@ var maxStats = ee.FeatureCollection(
   )
 ).flatten();
 
-// --- Table C: STDDEV of SPI only ---
-// To detect high stddev = spatially heterogeneous SPI within buffer
-//                       = restoration-relevant dam (partial functionality)
+// --- Table C: STDDEV of SPI — computed over water-detected pixels only ---
+// high stddev = permanent core + seasonal fringe within the water surface
+//             = spatially heterogeneous retention → restoration-relevant
 var stddevStats = ee.FeatureCollection(
   reduceByYear(
-    ee.Reducer.stdDev(),
+    ee.Reducer.stdDev().setOutputs(['spi_stddev']),
     ['spi'],
     'stddev'
   )
@@ -232,12 +223,11 @@ SNAPSHOT_YEARS.forEach(function(yr) {
     .filter(ee.Filter.calendarRange(DRY_START, DRY_END, 'month'))
     .select('NDWI').reduce(ee.Reducer.percentile([90]));
 
-  var spi   = wet_p90.subtract(dry_p90);
   var water = ndwi_p90.gt(0).selfMask();
-  var spi_m = spi.updateMask(water);
+  var spi   = wet_p90.subtract(dry_p90).updateMask(water).rename('spi');
 
   Map.addLayer(ndwi_p90.clip(dams_buffer), NDWI_VIZ, 'NDWI p90 ' + yr, false);
-  Map.addLayer(spi_m.clip(dams_buffer), SPI_VIZ, 'SPI ' + yr, false);
+  Map.addLayer(spi.clip(dams_buffer), SPI_VIZ, 'SPI ' + yr, false);
   Map.addLayer(water.clip(dams_buffer), {palette: 'blue'}, 'Water mask ' + yr, false);
 });
 
