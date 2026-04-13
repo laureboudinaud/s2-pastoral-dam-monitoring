@@ -39,7 +39,7 @@ Sentinel-2 imagery                    Load & merge CSVs
 → Cloud masking                       → Normalise water fraction
 → Annual NDWI composites              → Mann-Kendall + Sen's slope
 → SPI computation                     → Dual classification (Set 1 + Set 2)
-→ Zonal statistics (3 CSVs)           → Time series plots
+→ Zonal statistics (3 CSVs)    →→→   → Time series plots
                                       → Export classified inventory
 ```
 
@@ -170,13 +170,14 @@ Three long-format tables, each with one row per dam per year (2016–2025):
 | 2. Paths & parameters | File paths, year range, classification thresholds, reference year |
 | 3. Load and merge | Read the three CSVs and merge on `dam_id` + `year` |
 | 4. Inspect | Regional mean water fraction per year — use to confirm reference year |
-| 5. Pivot to wide format | One row per dam, one column per metric per year |
-| 6. Normalisation | Compute `relative_water_fraction` against reference year |
-| 7. Trend analysis | Mann-Kendall test + Sen's slope for water fraction and SPI series |
-| 8. Threshold tuning | Inspect distributions and adjust `WF_HIGH`, `WF_LOW`, `SPI_PERM`, `SPI_SEAS` |
-| 9. Classification | Assign Set 1 and Set 2 classes + restoration candidate flag |
-| 10. Plots | Pekel-style time series plots by class |
-| 11. Export | Save classified inventory to `outputs/` |
+| 5. Water area | Derive `water_area_ha` from `water_fraction` (π × r² × fraction) |
+| 6. Pivot to wide format | One row per dam, one column per metric per year |
+| 7. Normalisation | Compute `relative_water_fraction` against reference year |
+| 8. Trend analysis | Mann-Kendall test + Sen's slope for water fraction and SPI series |
+| 9. Threshold tuning | Inspect distributions and adjust `WF_HIGH`, `WF_LOW`, `SPI_PERM`, `SPI_SEAS` |
+| 10. Classification | Assign Set 1 and Set 2 classes + restoration candidate flag |
+| 11. Plots | Pekel-style time series plots by class |
+| 12. Export | Save classified inventory to `outputs/` |
 
 ### Classification
 
