@@ -1,4 +1,4 @@
-# Pastoral Dam Monitoring and Water Availability Assessment Using Sentinel-2 Time Series
+# Agro-Pastoral Dam Monitoring and Water Availability Assessment in Semi-Arid Regions Using Sentinel-2 Time Series
 
 **Author:** Laure Boudinaud  
 **Date:** 2026  
