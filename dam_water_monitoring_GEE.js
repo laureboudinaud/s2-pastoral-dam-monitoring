@@ -252,7 +252,7 @@ Export.table.toDrive({
 
 Export.table.toDrive({
   collection:  stddevStats,
-  description: 'dam_stats_spi_stddev_2016_2025',
+  description: 'dam_stats_stddev_2016_2025',
   folder:      EXPORT_FOLDER,
   fileFormat:  'CSV'
 });
